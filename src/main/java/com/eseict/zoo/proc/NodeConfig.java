@@ -1,12 +1,7 @@
 package com.eseict.zoo.proc;
 
-import com.eseict.zoo.util.CommUtil;
-import com.google.common.base.Strings;
+import com.eseict.zoo.util.ZookeeperCommUtil;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.Properties;
 
 public class NodeConfig extends Properties {
@@ -69,7 +64,7 @@ public class NodeConfig extends Properties {
 //            throw new ZookeeperException();
 //        }
 
-        String mac =  CommUtil.getLocalMacAddress();
+        String mac =  ZookeeperCommUtil.getLocalMacAddress();
         super.setProperty(PARAM_KEY.SERVER_MAC, mac);
 
     }

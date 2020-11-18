@@ -1,6 +1,6 @@
 package com.eseict.zoo.proc;
 
-import com.eseict.zoo.util.CommUtil;
+import com.eseict.zoo.util.ZookeeperCommUtil;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -64,15 +64,15 @@ public class RunningNodeProcess {
             parentNodeCheck();
             // sequence ephemeral node 로 unique 함
             SERVER_INFO_ZNODE_PATH = zk.create(SERVER_INFO_ZNODE_PRE_PATH,
-                    gson.toJson(CommUtil.getServerInfo(id, mac)).getBytes(StandardCharsets.UTF_8),
+                    gson.toJson(ZookeeperCommUtil.getServerInfo(id, mac)).getBytes(StandardCharsets.UTF_8),
                     ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.EPHEMERAL_SEQUENTIAL
             );
-            logger.info("Create server info node [{}]", SERVER_INFO_ZNODE_PATH);
+            logger.debug("Create server info node [{}]", SERVER_INFO_ZNODE_PATH);
 
             // scheduler 등록
-
             startScheduler();
+            logger.info("RunningNodeProcess success.");
 
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -81,7 +81,7 @@ public class RunningNodeProcess {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        logger.info("RunningNodeProcess success.");
+
     }
 
     public void pathGen(){
@@ -137,33 +137,33 @@ public class RunningNodeProcess {
         //  /iot node
         if (zk.exists(GROUP_ZNODE_PATH, false) == null) {
             String returnPath = zk.create(GROUP_ZNODE_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            logger.info("Create group node [{}]", returnPath);
+            logger.debug("Create group node [{}]", returnPath);
         } else {
-            logger.info("Exist group node [{}]", GROUP_ZNODE_PATH);
+            logger.debug("Exist group node [{}]", GROUP_ZNODE_PATH);
         }
 
         //  /iot/append
         if (zk.exists(SUB_GROUP_ZNODE_PATH, false) == null) {
             String returnPath = zk.create(SUB_GROUP_ZNODE_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            logger.info("Create sub group node [{}]", returnPath);
+            logger.debug("Create sub group node [{}]", returnPath);
         } else {
-            logger.info("Exist sub group node [{}]", SUB_GROUP_ZNODE_PATH);
+            logger.debug("Exist sub group node [{}]", SUB_GROUP_ZNODE_PATH);
         }
 
         //  /iot/append/iotweb
         if (zk.exists(SYSTEM_ZNODE_PATH, false) == null) {
             String returnPath = zk.create(SYSTEM_ZNODE_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            logger.info("Create system node [{}]", returnPath);
+            logger.debug("Create system node [{}]", returnPath);
         } else {
-            logger.info("Exist system node [{}]", SYSTEM_ZNODE_PATH);
+            logger.debug("Exist system node [{}]", SYSTEM_ZNODE_PATH);
         }
 
         //  /iot/append/iotweb/runnings
         if (zk.exists(RUNNING_ZNODE_PATH, false) == null) {
             String returnPath = zk.create(RUNNING_ZNODE_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            logger.info("Create system node [{}]", returnPath);
+            logger.debug("Create system node [{}]", returnPath);
         } else {
-            logger.info("Exist system node [{}]", RUNNING_ZNODE_PATH);
+            logger.debug("Exist system node [{}]", RUNNING_ZNODE_PATH);
         }
     }
 
@@ -172,7 +172,7 @@ public class RunningNodeProcess {
         String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
         String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
 
-        ServerInfo serverInfo = CommUtil.getServerInfo();
+        ServerInfo serverInfo = ZookeeperCommUtil.getServerInfo();
   		serverInfo.setId(id);
 		serverInfo.setMac(mac);
 
@@ -180,9 +180,9 @@ public class RunningNodeProcess {
 
         if (serverMonitoringStat != null) {
             Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson(serverInfo).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
-            logger.info("Set Server monitoring Info [{}]", returnStat.toString());
+            logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
         } else {
-            logger.info("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
+            logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
         }
 
         return false;
@@ -196,13 +196,13 @@ public class RunningNodeProcess {
         ScheduledFuture<?> future = scheduler.schedule(new Runnable() {
             @Override
             public void run() {
-                logger.info("current id [{}][{}]", Thread.currentThread().getName(),  Thread.currentThread().getId());
+                logger.debug("current id [{}][{}]", Thread.currentThread().getName(),  Thread.currentThread().getId());
 
                 try {
                     String id = config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_ID);
                     String mac = config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
 
-                    ServerInfo serverInfo = CommUtil.getServerInfo();
+                    ServerInfo serverInfo = ZookeeperCommUtil.getServerInfo();
                     serverInfo.setId(id);
                     serverInfo.setMac(mac);
 
@@ -210,9 +210,9 @@ public class RunningNodeProcess {
 
                     if (serverMonitoringStat != null) {
                         Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson(serverInfo).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
-                        logger.info("Set Server monitoring Info [{}]", returnStat.toString());
+                        logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
                     } else {
-                        logger.info("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
+                        logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

@@ -9,15 +9,20 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
-public class ZooKeeperConnection {
+public class ZooKeeperConnectionFactory {
+
    Logger logger = LoggerFactory.getLogger(this.getClass());
+   private CountDownLatch connectedSignal = new CountDownLatch(1);
    private ZooKeeper zk;
-   final CountDownLatch connectedSignal = new CountDownLatch(1);
    private String host;
 
-   public ZooKeeper connect(String host) throws IOException, InterruptedException {
+   public void setHost(String host){
+      this.host = host;
+   }
 
-      zk = new ZooKeeper(host, 20000, new Watcher() {
+   public void connect() throws IOException, InterruptedException {
+
+      zk = new ZooKeeper(host, 5000, new Watcher() {
          @Override
          public void process(WatchedEvent event) {
             logger.debug("watchedEvent state {}",event.getState());
@@ -26,17 +31,31 @@ public class ZooKeeperConnection {
                connectedSignal.countDown();
             }
             if (event.getState() == Event.KeeperState.Expired) {
-//               connectedSignal.
+               try {
+                  reConnect();
+               } catch (IOException e) {
+                  e.printStackTrace();
+               } catch (InterruptedException e) {
+                  e.printStackTrace();
+               }
             }
          }
       });
 
       connectedSignal.await();
+//      return zk;
+   }
+
+   public ZooKeeper getConnection() throws IOException, InterruptedException {
+      if (zk == null) {
+         connect();
+      }
       return zk;
    }
 
-   public void reConnect(){
-
+   public void reConnect() throws IOException, InterruptedException {
+      connectedSignal = new CountDownLatch(1);
+      connect();
    }
  
    public void close() throws InterruptedException {

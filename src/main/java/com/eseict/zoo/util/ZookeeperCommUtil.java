@@ -1,6 +1,5 @@
 package com.eseict.zoo.util;
 
-import com.eseict.zoo.proc.NodeConfig;
 import com.eseict.zoo.proc.ServerInfo;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -23,9 +22,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Enumeration;
 import java.util.List;
 
-public class CommUtil {
+public class ZookeeperCommUtil {
 
-	private static final Logger logger = LoggerFactory.getLogger(CommUtil.class);
+	private static final Logger logger = LoggerFactory.getLogger(ZookeeperCommUtil.class);
 	
 	public static final String ZONE_ID = "Asia/Seoul";
 	public static final String LOCAL_OFFSET_ID = "+09:00";
@@ -42,8 +41,8 @@ public class CommUtil {
 	
 	public static final ZoneId ZONE = ZoneId.of(ZONE_ID);
 	public static final ZoneOffset OFFSET = ZoneOffset.of(LOCAL_OFFSET_ID);
-	public static final DateTimeFormatter onem2m_format = DateTimeFormatter.ofPattern(CommUtil.ONEM2M_DATE_FORMAT).withZone(ZONE);
-	public static final DateTimeFormatter onem2m_format_Millis = DateTimeFormatter.ofPattern(CommUtil.ONEM2M_DATE_FORMAT_MILLIS).withZone(ZONE);
+	public static final DateTimeFormatter onem2m_format = DateTimeFormatter.ofPattern(ZookeeperCommUtil.ONEM2M_DATE_FORMAT).withZone(ZONE);
+	public static final DateTimeFormatter onem2m_format_Millis = DateTimeFormatter.ofPattern(ZookeeperCommUtil.ONEM2M_DATE_FORMAT_MILLIS).withZone(ZONE);
 	
 	public static final DateTimeFormatter formatter10 = DateTimeFormatter.ofPattern(DATE_FORMAT_STR_10).withZone(ZONE);
 	public static final DateTimeFormatter formatter14 = DateTimeFormatter.ofPattern(DATE_FORMAT_STR_14).withZone(ZONE);
@@ -240,7 +239,7 @@ public class CommUtil {
 		ServerInfo serverInfo = new ServerInfo();
 
 		com.sun.management.OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-		Long currentTimestamp = CommUtil.getCurrentTimestampMillisecond(CommUtil.OFFSET);
+		Long currentTimestamp = ZookeeperCommUtil.getCurrentTimestampMillisecond(ZookeeperCommUtil.OFFSET);
 
 		Double cpuUsage = bean.getSystemCpuLoad();
 		Long memoryFree = bean.getFreePhysicalMemorySize();
@@ -250,7 +249,6 @@ public class CommUtil {
 		serverInfo.setCpuUsage(cpuUsage);
 		serverInfo.setMemoryFree(memoryFree);
 		serverInfo.setMemoryTotal(memoryTotal);
-
 
 		return serverInfo;
 	}
@@ -262,7 +260,13 @@ public class CommUtil {
 		return serverInfo;
 	}
 
-	
+	public static ServerInfo getServerInfo(String id, String mac, String host, String port) throws UnknownHostException {
+		ServerInfo serverInfo = getServerInfo(id, mac);
+		serverInfo.setHost(host);
+		serverInfo.setPort(port);
+		return serverInfo;
+	}
+
 	public static String unescape(String string) {
 		String escapes[][] = new String[][] { 
 			{ "&lt;", "<" }, 

@@ -2,24 +2,39 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
+    <!--<parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.2.4.RELEASE</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
+        <relativePath/> &lt;!&ndash; lookup parent from repository &ndash;&gt;
+    </parent>-->
     <packaging>jar</packaging>
     <groupId>com.eseict</groupId>
     <artifactId>zoo</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>zoo</name>
     <description>zookeeper</description>
 
     <properties>
+        <!--<maven.test.skip>true</maven.test.skip>-->
         <java.version>1.8</java.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>public</id>
+            <name>Dev Public</name>
+            <url>http://210.97.42.246:10053/nexus/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>central</id>
+            <name>central</name>
+            <url>http://210.97.42.246:10053/nexus/content/repositories/central/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
+        <!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jdbc</artifactId>
@@ -50,30 +65,35 @@
             <artifactId>amqp-client</artifactId>
             <version>5.7.3</version>
         </dependency>
-
+-->
 
         <!-- https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper -->
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
             <version>3.4.13</version>
+<!--
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
             </exclusions>
+-->
             <!--<type>pom</type>-->
         </dependency>
+
 
         <!-- logback -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
+            <version>1.2.3</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.janino</groupId>
             <artifactId>janino</artifactId>
+            <version>3.1.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
@@ -90,6 +110,15 @@
             <version>28.2-jre</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-context -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>5.2.10.RELEASE</version>
+        </dependency>
+
+
+        <!--
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
@@ -115,7 +144,8 @@
             <artifactId>hibernate-jpa-2.1-api</artifactId>
             <version>1.0.0.Final</version>
         </dependency>
-
+-->
+        <!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -126,16 +156,53 @@
                     <artifactId>junit-vintage-engine</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
+            <!--<plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>7</source>
+                    <target>7</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>http://10.10.0.151:9080/nexus/content/groups/public</url>
+            <!-- <url>http://210.97.42.246:10053/nexus/content/groups/public</url> -->
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
+        <!-- use the following if you're not using a snapshot version. -->
+        <repository>
+            <id>Releases</id>
+            <url>http://10.10.0.151:9080/nexus/content/repositories/releases/</url>
+            <!-- <url>http://210.97.42.246:10053/nexus/content/repositories/releases/</url> -->
+        </repository>
+        <!-- use the following if you ARE using a snapshot version. -->
+        <snapshotRepository>
+            <id>Snapshots</id>
+            <url>http://10.10.0.151:9080/nexus/content/repositories/snapshots/</url>
+            <!-- <url>http://210.97.42.246:10053/nexus/content/repositories/snapshots/</url> -->
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>

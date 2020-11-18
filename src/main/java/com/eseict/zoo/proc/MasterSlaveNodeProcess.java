@@ -1,6 +1,6 @@
 package com.eseict.zoo.proc;
 
-import com.eseict.zoo.util.CommUtil;
+import com.eseict.zoo.util.ZookeeperCommUtil;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -10,12 +10,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
@@ -38,6 +33,10 @@ public class MasterSlaveNodeProcess {
 
     public MasterSlaveNodeProcess(){}
     public MasterSlaveNodeProcess(ZooKeeper zk){this.zk = zk;}
+
+    public boolean isMaster(){
+        return masterYn;
+    }
 
     public ZooKeeper getZookeeperConnection() {
         return zk;
@@ -62,6 +61,8 @@ public class MasterSlaveNodeProcess {
 
         String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
         String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
+        String host = this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST);
+        String port = this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT);
 
         if (Strings.isNullOrEmpty(id)) {
             throw new ZookeeperException("id not set");
@@ -75,17 +76,17 @@ public class MasterSlaveNodeProcess {
 
             if (zk.exists(MASTER_ZNODE_PATH, false) == null) {
                 String result = zk.create(MASTER_ZNODE_PATH,
-                        gson.toJson(CommUtil.getServerInfo(id, mac)).getBytes(StandardCharsets.UTF_8),
+                        gson.toJson(ZookeeperCommUtil.getServerInfo(id, mac, host, port)).getBytes(StandardCharsets.UTF_8),
                         ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.EPHEMERAL);
-                logger.info("create master node [{}]", result);
+                logger.debug("create master node [{}]", result);
                 masterYn = true;
             } else {
-                logger.info("Exist master node");
+                logger.debug("Exist master node");
             }
             // master 나 slave 중 하나라도 생성시에 watcher 생성
             zk.exists(MASTER_ZNODE_PATH, watcher);
-
+            logger.info("MasterSlaveNodeProcess success.");
         } catch (KeeperException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -93,7 +94,7 @@ public class MasterSlaveNodeProcess {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        logger.info("MasterSlaveNodeProcess success.");
+
     }
 
     public void pathGen(){
@@ -142,25 +143,25 @@ public class MasterSlaveNodeProcess {
         //  /iot node
         if (zk.exists(GROUP_ZNODE_PATH, false) == null) {
             String returnPath = zk.create(GROUP_ZNODE_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            logger.info("Create group node [{}]", returnPath);
+            logger.debug("Create group node [{}]", returnPath);
         } else {
-            logger.info("Exist group node [{}]", GROUP_ZNODE_PATH);
+            logger.debug("Exist group node [{}]", GROUP_ZNODE_PATH);
         }
 
         //  /iot/append
         if (zk.exists(SUB_GROUP_ZNODE_PATH, false) == null) {
             String returnPath = zk.create(SUB_GROUP_ZNODE_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            logger.info("Create sub group node [{}]", returnPath);
+            logger.debug("Create sub group node [{}]", returnPath);
         } else {
-            logger.info("Exist sub group node [{}]", SUB_GROUP_ZNODE_PATH);
+            logger.debug("Exist sub group node [{}]", SUB_GROUP_ZNODE_PATH);
         }
 
         //  /iot/append/iotweb
         if (zk.exists(SYSTEM_ZNODE_PATH, false) == null) {
             String returnPath = zk.create(SYSTEM_ZNODE_PATH, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            logger.info("Create system node [{}]", returnPath);
+            logger.debug("Create system node [{}]", returnPath);
         } else {
-            logger.info("Exist system node [{}]", SYSTEM_ZNODE_PATH);
+            logger.debug("Exist system node [{}]", SYSTEM_ZNODE_PATH);
         }
     }
 
