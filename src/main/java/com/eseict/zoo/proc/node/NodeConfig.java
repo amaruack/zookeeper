@@ -1,5 +1,6 @@
-package com.eseict.zoo.proc;
+package com.eseict.zoo.proc.node;
 
+import com.eseict.zoo.exception.ZookeeperException;
 import com.eseict.zoo.util.ZookeeperCommUtil;
 
 import java.util.Properties;

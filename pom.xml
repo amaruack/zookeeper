@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
     <groupId>com.eseict</groupId>
     <artifactId>zoo</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.3</version>
     <name>zoo</name>
     <description>zookeeper</description>
 

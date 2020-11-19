@@ -1,4 +1,4 @@
-package com.eseict.zoo.proc;
+package com.eseict.zoo.proc.node;
 
 public class ServerInfo {
 

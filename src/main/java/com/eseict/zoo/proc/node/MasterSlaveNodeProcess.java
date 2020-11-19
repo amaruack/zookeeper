@@ -1,23 +1,25 @@
-package com.eseict.zoo.proc;
+package com.eseict.zoo.proc.node;
 
+import com.eseict.zoo.proc.ZooKeeperMain;
+import com.eseict.zoo.exception.ZookeeperException;
+import com.eseict.zoo.proc.watch.MasterSlaveNodeWatcher;
 import com.eseict.zoo.util.ZookeeperCommUtil;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
-public class MasterSlaveNodeProcess {
+public class MasterSlaveNodeProcess implements NodeProcess {
 
     private Logger logger = LoggerFactory.getLogger(MasterSlaveNodeProcess.class);
     private ZooKeeper zk;
+    private ZooKeeperMain zooKeeperMain;
     private MasterSlaveNodeWatcher watcher;
     private boolean masterYn = false;
     private Gson gson = new GsonBuilder().create();
@@ -32,18 +34,23 @@ public class MasterSlaveNodeProcess {
     public String MASTER_ZNODE_PATH = "";
 
     public MasterSlaveNodeProcess(){}
-    public MasterSlaveNodeProcess(ZooKeeper zk){this.zk = zk;}
+    public MasterSlaveNodeProcess(ZooKeeperMain zooKeeperMain){
+        setZookeeperConnection(zooKeeperMain);
+    }
 
     public boolean isMaster(){
         return masterYn;
     }
 
-    public ZooKeeper getZookeeperConnection() {
-        return zk;
+    public ZooKeeperMain getZookeeperConnection() {
+        return zooKeeperMain;
     }
 
-    public void setZookeeperConnection(ZooKeeper zk) {
-        this.zk = zk;
+    public void setZookeeperConnection(ZooKeeperMain zookeeperMain) {
+        this.zooKeeperMain = zookeeperMain;
+        // 여기서 handler add 처리 해야됨
+//        this.zooKeeperConnection.addWatcherHandler(Watcher.Event.KeeperState.Expired, this);
+        this.zooKeeperMain.addWatcherHandler(Watcher.Event.KeeperState.Disconnected, this);
     }
 
     public MasterSlaveNodeWatcher getWatcher() {
@@ -53,22 +60,27 @@ public class MasterSlaveNodeProcess {
     public void setWatcher(MasterSlaveNodeWatcher watcher) {
         this.watcher = watcher;
         watcher.setProcess(this);
-//        watcher.setConfig(this.config);
     }
 
+    public void init() throws ZookeeperException {
+        init(this.config);
+    }
+
+    @Override
     public void init(NodeConfig config) throws ZookeeperException {
-        this.config = config;
-
-        String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
-        String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
-        String host = this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST);
-        String port = this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT);
-
-        if (Strings.isNullOrEmpty(id)) {
-            throw new ZookeeperException("id not set");
-        }
 
         try {
+            this.config = config;
+            this.zk = zooKeeperMain.getConnect();
+
+            String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
+            String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
+            String host = this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST);
+            String port = this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT);
+
+            if (Strings.isNullOrEmpty(id)) {
+                throw new ZookeeperException("id not set");
+            }
             // path generate
             pathGen();
             // parent node check
@@ -93,8 +105,9 @@ public class MasterSlaveNodeProcess {
             e.printStackTrace();
         } catch (UnknownHostException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
     }
 
     public void pathGen(){

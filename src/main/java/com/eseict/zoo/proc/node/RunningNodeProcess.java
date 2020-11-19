@@ -1,27 +1,29 @@
-package com.eseict.zoo.proc;
+package com.eseict.zoo.proc.node;
 
+import com.eseict.zoo.proc.ZooKeeperMain;
+import com.eseict.zoo.exception.ZookeeperException;
 import com.eseict.zoo.util.ZookeeperCommUtil;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
+
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ScheduledFuture;
 
-public class RunningNodeProcess {
+public class RunningNodeProcess implements NodeProcess  {
 
     Logger logger = LoggerFactory.getLogger(RunningNodeProcess.class);
 
     private NodeConfig config;
+    private ZooKeeperMain zooKeeperMain;
     ZooKeeper zk;
     private ScheduledFuture<?> future; // schdeuler future
 
@@ -36,28 +38,36 @@ public class RunningNodeProcess {
 
     Gson gson = new GsonBuilder().create();
 
+
     public RunningNodeProcess(){}
-    public RunningNodeProcess(ZooKeeper zk){this.zk = zk;}
-
-    public ZooKeeper getZookeeperConnection() {
-        return zk;
+    public RunningNodeProcess(ZooKeeperMain zooKeeperMain){
+        setZookeeperConnection(zooKeeperMain);
     }
 
-    public void setZookeeperConnection(ZooKeeper zk) {
-        this.zk = zk;
+    public ZooKeeperMain getZookeeperConnection() {
+        return zooKeeperMain;
     }
 
-    public void init(NodeConfig config) throws ZookeeperException {
-        this.config = config;
+    public void setZookeeperConnection(ZooKeeperMain zookeeperMain) {
+        this.zooKeeperMain = zookeeperMain;
+        // 여기서 handler add 처리 해야됨
+//        this.zooKeeperConnection.addWatcherHandler(Watcher.Event.KeeperState.Expired, this);
+        this.zooKeeperMain.addWatcherHandler(Watcher.Event.KeeperState.Disconnected, this);
+    }
 
-        String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
-        String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
-
-        if (Strings.isNullOrEmpty(id)) {
-            throw new ZookeeperException("id not set");
-        }
+    @Override
+    public void init() throws ZookeeperException {
 
         try {
+            this.zk = zooKeeperMain.getConnect();
+
+            String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
+            String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
+
+            if (Strings.isNullOrEmpty(id)) {
+                throw new ZookeeperException("id not set");
+            }
+
             // path generate
             pathGen();
             // parent node check
@@ -70,6 +80,8 @@ public class RunningNodeProcess {
             );
             logger.debug("Create server info node [{}]", SERVER_INFO_ZNODE_PATH);
 
+            // future 이 있다면 종료 이후 등록
+            stopScheduler();
             // scheduler 등록
             startScheduler();
             logger.info("RunningNodeProcess success.");
@@ -80,8 +92,15 @@ public class RunningNodeProcess {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
 
+    @Override
+    public void init(NodeConfig config) throws ZookeeperException {
+        this.config = config;
+        init();
     }
 
     public void pathGen(){
@@ -167,66 +186,71 @@ public class RunningNodeProcess {
         }
     }
 
-    public boolean setServerMonitoringInfo() throws UnknownHostException, KeeperException, InterruptedException {
-
-        String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
-        String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
-
-        ServerInfo serverInfo = ZookeeperCommUtil.getServerInfo();
-  		serverInfo.setId(id);
-		serverInfo.setMac(mac);
-
-        Stat serverMonitoringStat = zk.exists(SERVER_INFO_ZNODE_PATH, false);
-
-        if (serverMonitoringStat != null) {
-            Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson(serverInfo).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
-            logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
-        } else {
-            logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
-        }
-
-        return false;
-    }
+//    public boolean setServerMonitoringInfo() throws UnknownHostException, KeeperException, InterruptedException {
+//
+//        String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
+//        String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
+//
+//        ServerInfo serverInfo = ZookeeperCommUtil.getServerInfo();
+//  		serverInfo.setId(id);
+//		serverInfo.setMac(mac);
+//
+//        Stat serverMonitoringStat = zk.exists(SERVER_INFO_ZNODE_PATH, false);
+//
+//        if (serverMonitoringStat != null) {
+//            Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson(serverInfo).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
+//            logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
+//        } else {
+//            logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
+//        }
+//
+//        return false;
+//    }
 
     public void startScheduler() throws ZookeeperException {
 
-        String cronExpression = "0 * * * * *";
+        String cronExpression = "0,30 * * * * *";
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.initialize();
         ScheduledFuture<?> future = scheduler.schedule(new Runnable() {
             @Override
             public void run() {
-                logger.debug("current id [{}][{}]", Thread.currentThread().getName(),  Thread.currentThread().getId());
 
-                try {
-                    String id = config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_ID);
-                    String mac = config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
+            logger.debug("current id [{}][{}]", Thread.currentThread().getName(),  Thread.currentThread().getId());
 
-                    ServerInfo serverInfo = ZookeeperCommUtil.getServerInfo();
-                    serverInfo.setId(id);
-                    serverInfo.setMac(mac);
+            try {
+                String id = config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_ID);
+                String mac = config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
 
-                    Stat serverMonitoringStat = zk.exists(SERVER_INFO_ZNODE_PATH, false);
+                ServerInfo serverInfo = ZookeeperCommUtil.getServerInfo();
+                serverInfo.setId(id);
+                serverInfo.setMac(mac);
 
-                    if (serverMonitoringStat != null) {
-                        Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson(serverInfo).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
-                        logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
-                    } else {
-                        logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (KeeperException e) {
-                    e.printStackTrace();
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
+                Stat serverMonitoringStat = zk.exists(SERVER_INFO_ZNODE_PATH, false);
+
+                if (serverMonitoringStat != null) {
+                    Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson(serverInfo).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
+                    logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
+                } else {
+                    logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
                 }
-
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (KeeperException e) {
+                e.printStackTrace();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
 
             }
         }, new CronTrigger(cronExpression));
         this.future = future;
     }
 
+    public void stopScheduler(){
+        if (this.future != null) {
+            this.future.cancel(true);
+        }
+    }
 
 }

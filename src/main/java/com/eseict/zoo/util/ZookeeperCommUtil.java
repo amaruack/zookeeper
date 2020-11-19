@@ -1,6 +1,6 @@
 package com.eseict.zoo.util;
 
-import com.eseict.zoo.proc.ServerInfo;
+import com.eseict.zoo.proc.node.ServerInfo;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

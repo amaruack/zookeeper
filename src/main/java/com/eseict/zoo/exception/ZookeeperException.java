@@ -1,4 +1,4 @@
-package com.eseict.zoo.proc;
+package com.eseict.zoo.exception;
 
 public class ZookeeperException extends Exception {
 
