@@ -51,8 +51,8 @@ public class RunningNodeProcess implements NodeProcess  {
     public void setZookeeperConnection(ZooKeeperMain zookeeperMain) {
         this.zooKeeperMain = zookeeperMain;
         // 여기서 handler add 처리 해야됨
-//        this.zooKeeperConnection.addWatcherHandler(Watcher.Event.KeeperState.Expired, this);
-        this.zooKeeperMain.addWatcherHandler(Watcher.Event.KeeperState.Disconnected, this);
+        this.zooKeeperMain.addWatcherHandler(Watcher.Event.KeeperState.Expired, this);
+//        this.zooKeeperMain.addWatcherHandler(Watcher.Event.KeeperState.Disconnected, this);
     }
 
     @Override
@@ -80,8 +80,6 @@ public class RunningNodeProcess implements NodeProcess  {
             );
             logger.debug("Create server info node [{}]", SERVER_INFO_ZNODE_PATH);
 
-            // future 이 있다면 종료 이후 등록
-            stopScheduler();
             // scheduler 등록
             startScheduler();
             logger.info("RunningNodeProcess success.");
@@ -208,6 +206,9 @@ public class RunningNodeProcess implements NodeProcess  {
 //    }
 
     public void startScheduler() throws ZookeeperException {
+
+        // future 이 있다면 종료 이후 등록
+        stopScheduler();
 
         String cronExpression = "0,30 * * * * *";
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();

@@ -35,7 +35,8 @@ public class MasterSlaveNodeWatcher implements Watcher {
         try {
 //            logger.debug("receive master watchedEvent state {}", watchedEvent.getState());
 //            logger.debug("receive master watchedEvent name {}", watchedEvent.getType().name());
-            if (watchedEvent.getType() == Event.EventType.NodeDeleted){
+            if (watchedEvent.getState() != Event.KeeperState.SyncConnected &&
+                    watchedEvent.getType() == Event.EventType.NodeDeleted){
                 logger.debug("action master watchedEvent state {}", watchedEvent.getState());
                 logger.debug("action master watchedEvent name {}", watchedEvent.getType().name());
                 process.init(this.process.config);

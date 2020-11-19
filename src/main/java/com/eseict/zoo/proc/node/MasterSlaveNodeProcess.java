@@ -49,8 +49,8 @@ public class MasterSlaveNodeProcess implements NodeProcess {
     public void setZookeeperConnection(ZooKeeperMain zookeeperMain) {
         this.zooKeeperMain = zookeeperMain;
         // 여기서 handler add 처리 해야됨
-//        this.zooKeeperConnection.addWatcherHandler(Watcher.Event.KeeperState.Expired, this);
-        this.zooKeeperMain.addWatcherHandler(Watcher.Event.KeeperState.Disconnected, this);
+        this.zooKeeperMain.addWatcherHandler(Watcher.Event.KeeperState.Expired, this);
+//        this.zooKeeperMain.addWatcherHandler(Watcher.Event.KeeperState.Disconnected, this);
     }
 
     public MasterSlaveNodeWatcher getWatcher() {

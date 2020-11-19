@@ -1,5 +1,6 @@
 package com.eseict.zoo.proc;
 
+import com.eseict.zoo.exception.ZookeeperException;
 import com.eseict.zoo.proc.node.NodeProcess;
 import com.eseict.zoo.proc.watch.ZookeeperConnectionWatcher;
 import org.apache.zookeeper.Watcher;
@@ -21,6 +22,9 @@ public class ZooKeeperMain {
    volatile CountDownLatch connectedSignal = new CountDownLatch(1);
    private String host;
    private Map<Integer, List<NodeProcess>> watcherHandler = new HashMap<>();
+
+   private final Integer CONNECTION_TIMEOUT = 10000;
+   private final Integer COUNT_DOWN_NUMBER = 1;
 
    public void setHost(String host){
       this.host = host;
@@ -53,23 +57,11 @@ public class ZooKeeperMain {
 
    public synchronized ZooKeeper getConnect() throws IOException, InterruptedException {
       if (zk == null || !zk.getState().isConnected() || !zk.getState().isAlive()){
-         connectedSignal = new CountDownLatch(1);
-         zk = new ZooKeeper(this.host, 10000, new ZookeeperConnectionWatcher(this));
-//         zk = new ZooKeeper(this.host, 20000, new Watcher() {
-//            @Override
-//            public void process(WatchedEvent event) {
-//               logger.debug("watchedEvent state {}",event.getState());
-//               logger.debug("watchedEvent name {}",event.getType().name());
-//               if (event.getState() == Event.KeeperState.SyncConnected) {
-//                  connectedSignal.countDown();
-//               }
-//               if (event.getState() == Event.KeeperState.Expired) {
-////               connectedSignal.
-////                  watcherHandler.clear();
-//               }
-//            }
-//         });
+         connectedSignal = new CountDownLatch(COUNT_DOWN_NUMBER);
+         zk = new ZooKeeper(this.host, CONNECTION_TIMEOUT, new ZookeeperConnectionWatcher(this));
+         logger.info("getConnect count down {}", getConnectedSignal().getCount());
          connectedSignal.await();
+         logger.info("getConnect count down {}", getConnectedSignal().getCount());
       }
       return zk;
    }
@@ -79,12 +71,35 @@ public class ZooKeeperMain {
       return getConnect();
    }
 
-   public ZooKeeper reConnect() throws IOException, InterruptedException {
-      zk.close();
-      return getConnect();
+   public ZooKeeper reConnect(Watcher.Event.KeeperState state) throws IOException, InterruptedException {
+      close();
+      getConnect();
+      try {
+         List<NodeProcess> lists = getWatcherHandler().get(state.getIntValue());
+         logger.info("{} handler size {}",state, lists.size());
+         if (lists != null && lists.size() > 0) {
+            for (NodeProcess nodeProcess : lists) {
+               nodeProcess.init();
+            }
+         }
+      } catch (ZookeeperException e) {
+         e.printStackTrace();
+      }
+
+//      List<NodeProcess> lists = zooKeeperMain.getWatcherHandler().get(Event.KeeperState.Expired.getIntValue());
+//      logger.info("expired event node handler size {}",lists.size());
+//      if (lists != null && lists.size() > 0) {
+//         for (NodeProcess nodeProcess : lists) {
+//            nodeProcess.init();
+//         }
+//      }
+
+      return this.zk;
    }
  
    public void close() throws InterruptedException {
-      zk.close();
+      if (zk != null && zk.getState().isAlive()){
+         zk.close();
+      }
    }
 }

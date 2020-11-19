@@ -7,6 +7,7 @@ import com.eseict.zoo.proc.node.NodeConfig;
 import com.eseict.zoo.proc.watch.MasterSlaveNodeWatcher;
 import com.eseict.zoo.proc.node.RunningNodeProcess;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +54,10 @@ public class ZooApplication {
 
         Thread.sleep(10000);
 
+        zooKeeperMain.close();
+        zooKeeperMain.reConnect(Watcher.Event.KeeperState.Expired);
 
-        Thread.sleep(50000);
+        Thread.sleep(10000);
 
 //        ZooKeeperConnectionFactory zkf = new ZooKeeperConnectionFactory();
 //        zkf.setHost(host);
