@@ -63,6 +63,8 @@ public class RunningNodeProcess implements NodeProcess  {
 
             String id = this.config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_ID);
             String mac = this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
+            String host = this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST);
+            String port = this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT);
 
             if (Strings.isNullOrEmpty(id)) {
                 throw new ZookeeperException("id not set");
@@ -74,7 +76,7 @@ public class RunningNodeProcess implements NodeProcess  {
             parentNodeCheck();
             // sequence ephemeral node 로 unique 함
             SERVER_INFO_ZNODE_PATH = zk.create(SERVER_INFO_ZNODE_PRE_PATH,
-                    gson.toJson(ZookeeperCommUtil.getServerInfo(id, mac)).getBytes(StandardCharsets.UTF_8),
+                    gson.toJson(ZookeeperCommUtil.getServerInfo(id, mac, host, port)).getBytes(StandardCharsets.UTF_8),
                     ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.EPHEMERAL_SEQUENTIAL
             );
@@ -222,15 +224,13 @@ public class RunningNodeProcess implements NodeProcess  {
             try {
                 String id = config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_ID);
                 String mac = config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
-
-                ServerInfo serverInfo = ZookeeperCommUtil.getServerInfo();
-                serverInfo.setId(id);
-                serverInfo.setMac(mac);
+                String host = config.get(NodeConfig.PARAM_KEY.SERVER_HOST) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_HOST);
+                String port = config.get(NodeConfig.PARAM_KEY.SERVER_PORT) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_PORT);
 
                 Stat serverMonitoringStat = zk.exists(SERVER_INFO_ZNODE_PATH, false);
 
                 if (serverMonitoringStat != null) {
-                    Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson(serverInfo).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
+                    Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson( ZookeeperCommUtil.getServerInfo(id, mac, host, port)).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
                     logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
                 } else {
                     logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
