@@ -23,8 +23,26 @@ public class ZooKeeperMain {
    private String host;
    private Map<Integer, List<NodeProcess>> watcherHandler = new HashMap<>();
 
-   private final Integer CONNECTION_TIMEOUT = 10000;
-   private final Integer COUNT_DOWN_NUMBER = 1;
+   private Integer CONNECTION_TIMEOUT = 10000;
+   private Integer COUNT_DOWN_NUMBER = 1;
+
+   /**
+    * zookeeper connection timeout setting
+    * default time is 10000 milliseconds
+    * @param connectionTimeout milliseconds
+    */
+   public void setConnectionTimeout(Integer connectionTimeout){
+      this.CONNECTION_TIMEOUT = connectionTimeout;
+   }
+
+   /**
+    * if zookeeper receive SyncConnected that count number is -1
+    * @param count - count down number
+    */
+   public void setCountDownNumber(Integer count) {
+      this.COUNT_DOWN_NUMBER = count;
+   }
+
 
    public void setHost(String host){
       this.host = host;
@@ -59,9 +77,7 @@ public class ZooKeeperMain {
       if (zk == null || !zk.getState().isConnected() || !zk.getState().isAlive()){
          connectedSignal = new CountDownLatch(COUNT_DOWN_NUMBER);
          zk = new ZooKeeper(this.host, CONNECTION_TIMEOUT, new ZookeeperConnectionWatcher(this));
-         logger.info("getConnect count down {}", getConnectedSignal().getCount());
          connectedSignal.await();
-         logger.info("getConnect count down {}", getConnectedSignal().getCount());
       }
       return zk;
    }

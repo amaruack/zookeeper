@@ -18,7 +18,7 @@ public class ZooApplication {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZooApplication.class);
 
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException, ZookeeperException {
-        String zookeeperHost="210.97.42.250:2181";
+        String zookeeperHost="10.10.0.198:2181,10.10.0.198:2182,10.10.0.198:2183";
 
         ZooKeeperMain zooKeeperMain = new ZooKeeperMain();
         zooKeeperMain.setHost(zookeeperHost);
