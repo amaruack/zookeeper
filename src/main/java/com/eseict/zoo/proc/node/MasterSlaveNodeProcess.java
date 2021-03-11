@@ -78,6 +78,9 @@ public class MasterSlaveNodeProcess implements NodeProcess {
             String host = this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_HOST);
             String port = this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.SERVER_PORT);
 
+            String os = this.config.get(NodeConfig.PARAM_KEY.OS_NAME) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.OS_NAME);
+            String homePath = this.config.get(NodeConfig.PARAM_KEY.HOME_PATH) == null ? "" : (String)this.config.get(NodeConfig.PARAM_KEY.HOME_PATH);
+
             if (Strings.isNullOrEmpty(id)) {
                 throw new ZookeeperException("id not set");
             }
@@ -88,7 +91,7 @@ public class MasterSlaveNodeProcess implements NodeProcess {
 
             if (zk.exists(MASTER_ZNODE_PATH, false) == null) {
                 String result = zk.create(MASTER_ZNODE_PATH,
-                        gson.toJson(ZookeeperCommUtil.getServerInfo(id, mac, host, port)).getBytes(StandardCharsets.UTF_8),
+                        gson.toJson(ZookeeperCommUtil.getServerInfo(id, mac, host, port, os, homePath)).getBytes(StandardCharsets.UTF_8),
                         ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.EPHEMERAL);
                 logger.debug("create master node [{}]", result);

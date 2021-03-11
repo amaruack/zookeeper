@@ -2,6 +2,7 @@ package com.eseict.zoo.proc.node;
 
 import com.eseict.zoo.exception.ZookeeperException;
 import com.eseict.zoo.util.ZookeeperCommUtil;
+import com.google.common.base.Strings;
 
 import java.util.Properties;
 
@@ -19,6 +20,9 @@ public class NodeConfig extends Properties {
         public static String GROUP_PATH = "groupPath";
         public static String SUB_GROUP_PATH = "subGroupPath";
         public static String SYSTEM_PATH = "systemPath";
+
+        public static String OS_NAME = "os";
+        public static String HOME_PATH = "homePath";
 
     }
 
@@ -59,15 +63,13 @@ public class NodeConfig extends Properties {
     }
 
     public void init() throws ZookeeperException {
-
-//        String id = super.get(SERVER_ID) == null ? "" : (String) super.get(SERVER_ID);
-//        if (Strings.isNullOrEmpty(id)) {
-//            throw new ZookeeperException();
-//        }
-
+        String osName = System.getProperty("os.name");
+        if (Strings.isNullOrEmpty(osName)) {
+            osName = "NONE";
+        }
         String mac =  ZookeeperCommUtil.getLocalMacAddress();
         super.setProperty(PARAM_KEY.SERVER_MAC, mac);
-
+        super.setProperty(PARAM_KEY.OS_NAME, osName);
     }
 
 

@@ -13,6 +13,26 @@ public class ServerInfo {
     private Long memoryTotal;   // memory time 전체 메모리 ex) 1241241214124
     private Long timestamp;
 
+    private String os;  // server os name
+    private String homePath; // 각 시스템 home path 경로 , 해당 경로에 위치한 restart.sh를 실행한다.
+
+
+    public String getOs() {
+        return os;
+    }
+
+    public void setOs(String os) {
+        this.os = os;
+    }
+
+    public String getHomePath() {
+        return homePath;
+    }
+
+    public void setHomePath(String homePath) {
+        this.homePath = homePath;
+    }
+
     public String getHost() {
         return host;
     }

@@ -44,6 +44,7 @@ public class ZookeeperConnectionWatcher implements Watcher {
         }
         if (watchedEvent.getState() == Event.KeeperState.Disconnected) {
             // connection loss 일 경우 해당 로직을 재시작 하는 로직은 중대한 시스템 오류를 발생할 가능성이 있음
+
         }
     }
 }

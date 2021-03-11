@@ -53,7 +53,7 @@ public class ZookeeperCommUtil {
 	public static final DateTimeFormatter formatterView = DateTimeFormatter.ofPattern(DATE_FORMAT_STR_VIEW).withZone(ZONE);
 	
 	public static void main(String[] args) {
-		
+		System.out.print(getLocalMacAddress());
 	}
 	
 	public static String byteArrayToHex(byte[] bytes){ 
@@ -170,7 +170,6 @@ public class ZookeeperCommUtil {
 	public static String dateTimeToString(LocalDateTime dateTime, DateTimeFormatter formatter) throws ParseException {
 		return dateTime.format(formatter);
 	}
-	
 
 	public static boolean containLocalServerIp(String ip) {
 		try {
@@ -192,20 +191,39 @@ public class ZookeeperCommUtil {
 		return false;
 	}
 
+
 	public static String getLocalMacAddress() {
 		String result = "";
 		InetAddress ip;
 		try {
+
 			ip = InetAddress.getLocalHost();
 
 			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
 			byte[] mac = network.getHardwareAddress();
 
 			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < mac.length; i++) {
-				sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+			try {
+				for (int i = 0; i < mac.length; i++) {
+					sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+				}
+				result = sb.toString();
+			} catch (NullPointerException e) {
+				logger.error(e.getLocalizedMessage());
+
+				ip = getRealInetAdderss();
+				network = NetworkInterface.getByInetAddress(ip);
+				mac = network.getHardwareAddress();
+
+				if (mac != null) {
+					for (int i = 0; i < mac.length; i++) {
+						sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+					}
+					result = sb.toString();
+				}
+
 			}
-			result = sb.toString();
+
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (SocketException e){
@@ -214,6 +232,28 @@ public class ZookeeperCommUtil {
 
 		return result;
 	}
+
+
+	public static InetAddress getRealInetAdderss() {
+		List<String> list = Lists.newArrayList();
+		try {
+			for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+				NetworkInterface intf = en.nextElement();
+				for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+					InetAddress inetAddress = enumIpAddr.nextElement();
+					if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress()
+						/*&& !inetAddress.isSiteLocalAddress()*/) { // TODO isSiteLocalAddress 설정 여부 추후에 처리해야됨
+						return inetAddress;
+//						return inetAddress.getHostAddress().toString();
+					}
+				}
+			}
+		} catch (SocketException ex) {
+			logger.error(ex.getMessage());
+		}
+		return null;
+	}
+
 
 	public static List<String> getLocalServerIps() {
 		List<String> list = Lists.newArrayList();
@@ -264,6 +304,13 @@ public class ZookeeperCommUtil {
 		ServerInfo serverInfo = getServerInfo(id, mac);
 		serverInfo.setHost(host);
 		serverInfo.setPort(port);
+		return serverInfo;
+	}
+
+	public static ServerInfo getServerInfo(String id, String mac, String host, String port, String os, String homePath) throws UnknownHostException {
+		ServerInfo serverInfo = getServerInfo(id, mac, host, port);
+		serverInfo.setOs(os);
+		serverInfo.setHomePath(homePath);
 		return serverInfo;
 	}
 

@@ -18,7 +18,8 @@ public class ZooApplication {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZooApplication.class);
 
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException, ZookeeperException {
-        String zookeeperHost="10.10.0.198:2181,10.10.0.198:2182,10.10.0.198:2183";
+        String zookeeperHost="210.97.42.250:2181";
+//        String zookeeperHost="10.10.0.198:2181,10.10.0.198:2182,10.10.0.198:2183";
 
         ZooKeeperMain zooKeeperMain = new ZooKeeperMain();
         zooKeeperMain.setHost(zookeeperHost);
@@ -38,6 +39,8 @@ public class ZooApplication {
         config.setProperty(NodeConfig.PARAM_KEY.GROUP_PATH, group);
         config.setProperty(NodeConfig.PARAM_KEY.SUB_GROUP_PATH, subGroup);
         config.setProperty(NodeConfig.PARAM_KEY.SYSTEM_PATH, system);
+
+        config.setProperty(NodeConfig.PARAM_KEY.HOME_PATH, "C:\\wefwf\\wefwef");
 
         // process 파일 생성
         MasterSlaveNodeProcess masterSlaveNodeProcess = new MasterSlaveNodeProcess(zooKeeperMain);

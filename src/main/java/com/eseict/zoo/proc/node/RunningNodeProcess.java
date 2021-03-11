@@ -219,29 +219,32 @@ public class RunningNodeProcess implements NodeProcess  {
             @Override
             public void run() {
 
-            logger.debug("current id [{}][{}]", Thread.currentThread().getName(),  Thread.currentThread().getId());
+                logger.debug("current id [{}][{}]", Thread.currentThread().getName(),  Thread.currentThread().getId());
 
-            try {
-                String id = config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_ID);
-                String mac = config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
-                String host = config.get(NodeConfig.PARAM_KEY.SERVER_HOST) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_HOST);
-                String port = config.get(NodeConfig.PARAM_KEY.SERVER_PORT) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_PORT);
+                try {
+                    String id = config.get(NodeConfig.PARAM_KEY.SERVER_ID) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_ID);
+                    String mac = config.get(NodeConfig.PARAM_KEY.SERVER_MAC) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_MAC);
+                    String host = config.get(NodeConfig.PARAM_KEY.SERVER_HOST) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_HOST);
+                    String port = config.get(NodeConfig.PARAM_KEY.SERVER_PORT) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.SERVER_PORT);
 
-                Stat serverMonitoringStat = zk.exists(SERVER_INFO_ZNODE_PATH, false);
+                    String os = config.get(NodeConfig.PARAM_KEY.OS_NAME) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.OS_NAME);
+                    String homePath = config.get(NodeConfig.PARAM_KEY.HOME_PATH) == null ? "" : (String)config.get(NodeConfig.PARAM_KEY.HOME_PATH);
 
-                if (serverMonitoringStat != null) {
-                    Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson( ZookeeperCommUtil.getServerInfo(id, mac, host, port)).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
-                    logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
-                } else {
-                    logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
+                    Stat serverMonitoringStat = zk.exists(SERVER_INFO_ZNODE_PATH, false);
+
+                    if (serverMonitoringStat != null) {
+                        Stat returnStat = zk.setData(SERVER_INFO_ZNODE_PATH, gson.toJson( ZookeeperCommUtil.getServerInfo(id, mac, host, port, os, homePath)).getBytes(StandardCharsets.UTF_8), serverMonitoringStat.getVersion());
+                        logger.debug("Set Server monitoring Info [{}]", returnStat.toString());
+                    } else {
+                        logger.debug("Not Exist server monitoring info node [{}]", SERVER_INFO_ZNODE_PATH);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (KeeperException e) {
+                    e.printStackTrace();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (KeeperException e) {
-                e.printStackTrace();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
 
             }
         }, new CronTrigger(cronExpression));
