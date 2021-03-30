@@ -1,10 +1,13 @@
 # zookeeper
 
 zookeeper 를 이용한 Master/Slave 설정  
-zookeepr 를 이용하여 runnings 설정 - 시스템 모니터링 용도  
+zookeeper 를 이용하여 runnings 설정 - 시스템 모니터링 용도  
+
+// 추가
+zookeeper 를 이용하여 system의 간단한 재구동 및 정지, 실행 을 가능하도록 ssh, 경로, shell 파일에 대한 정보가 담긴 meta node 설정 
 
 
 
+![20210331083951](https://user-images.githubusercontent.com/34525953/113070169-ec77ea80-91fc-11eb-8e72-9682a098da26.png)
+  
 
-
-![20201119175510](https://user-images.githubusercontent.com/34525953/99644495-5cc57100-2a91-11eb-9771-b7b714bde119.png)
